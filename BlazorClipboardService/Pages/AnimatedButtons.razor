@@ -1,0 +1,53 @@
+﻿@page "/animatedButtons"
+@using System.Threading
+@implements IDisposable
+@inject ClipboardService ClipboardService
+
+<h1>Animated Buttons!</h1>
+
+<button class="btn btn-primary" @onclick="ReadFromClipboard" disabled=@readState.IsDisabled>
+    <i class="@readState.IconClassName"></i> @readState.Text
+</button>
+@textGet
+<p></p>
+<button class="btn btn-primary" @onclick="CopyToClipboard" disabled=@copyState.IsDisabled>
+    <i class="@copyState.IconClassName"></i> @copyState.Text
+</button>
+<input class="input-group-text" type="text" id="textToCopy" size="40;10"
+    @bind="@textSet" @oninput="(EventArgs) => OnInput(EventArgs.Value?.ToString()!)" />
+
+@code {
+    CancellationTokenSource cts = new();
+    State readState = new("Read", "oi oi-clipboard");
+    State copyState = new("Copy", "oi oi-clipboard");
+    string? textGet;
+    string textSet = "Write the text to been copy to the clipboard.";
+
+    async Task ReadFromClipboard()
+    {
+        var temp = readState;
+        readState = new("Readed", "oi oi-check", IsDisabled: true);
+        textGet = await ClipboardService.ReadTextAsync();
+        await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
+        readState = temp;
+    }
+
+    async Task CopyToClipboard()
+    {
+        var temp = copyState;
+        copyState = new("Copied", "oi oi-check", IsDisabled: true);
+        await ClipboardService.WriteTextAsync(textSet);
+        await Task.Delay(TimeSpan.FromSeconds(2), cts.Token);
+        copyState = temp;
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel(); // Cancel Task.Delay
+        cts.Dispose();
+    }
+
+    void OnInput(string value) => textSet = (string) value;
+
+    record State(string Text, string IconClassName, bool IsDisabled = false);
+}

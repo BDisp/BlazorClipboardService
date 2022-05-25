@@ -1,0 +1,44 @@
+﻿@page "/"
+@inject ClipboardService ClipboardService
+
+<h1>Demo Clipboard!</h1>
+
+<button @onclick="ReadFromClipboard">Read from clipboard</button>
+@textGet
+<p></p>
+<button @onclick="CopyToClipboard">Copy to clipboard</button>
+<input type="text" id="textToCopy" size="40;10"
+    @bind="@textSet" @oninput="(EventArgs) => OnInput(EventArgs.Value?.ToString()!)" />
+
+@code {
+    string? textGet;
+    string textSet = "Write the text to been copy to the clipboard.";
+
+    async Task ReadFromClipboard()
+    {
+        // Reading from the clipboard may be denied, so you must handle the exception
+        try
+        {
+            textGet = await ClipboardService.ReadTextAsync();
+        }
+        catch
+        {
+            Console.WriteLine("Cannot read from clipboard");
+        }
+    }
+
+    async Task CopyToClipboard()
+    {
+        // Writing to the clipboard may be denied, so you must handle the exception
+        try
+        {
+            await ClipboardService.WriteTextAsync(textSet);
+        }
+        catch
+        {
+            Console.WriteLine("Cannot write text to clipboard");
+        }
+    }
+
+    void OnInput(string value) => textSet = (string) value;
+ }
